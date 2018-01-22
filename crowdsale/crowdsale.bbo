@@ -1,0 +1,29 @@
+contract PreToken
+( uint256 totalSupply
+, address => uint256 balances
+, address => address => uint256 allowances
+)
+{
+  default
+  {
+    balances[sender(msg)] = totalSupply;
+    return then become Token(totalSupply, balances, allowances);
+  }
+}
+
+contract Token
+( uint256 totalSupply
+, address => uint256 balances
+, address => address => uint256 allowances
+)
+{
+  case(bool transfer(address _to, uint256 _amount)) 
+  {
+    balances[sender(msg)] = balances[sender(msg)] + _amount;
+    return true then become Token(totalSupply, balances, allowances);
+  }
+  case(uint256 balanceOf(address _owner))
+  {
+    return balances[_owner] then become Token(totalSupply, balances, allowances);
+  }
+}

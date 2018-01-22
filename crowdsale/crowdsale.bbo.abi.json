@@ -1,0 +1,1 @@
+[{"type": "constructor", "inputs":[{"name": "totalSupply", "type": "uint256"}], "name": "PreToken", "outputs":[], "payable": true},{"type":"fallback","inputs": [],"outputs": [],"payable": true},{"type":"function","name":"transfer","inputs": [{"name": "_to", "type": "address"},{"name": "_amount", "type": "uint256"}],"outputs": [{"name": "", "type": "bool"}],"payable": true}]
