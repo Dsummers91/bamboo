@@ -1,29 +1,51 @@
-contract PreToken
+contract Presale
 ( uint256 totalSupply
+, uint256 presaleLimit
+, uint256 maxSupply
 , address => uint256 balances
 , address => address => uint256 allowances
 )
 {
-  default
+  case(bool allocate(address _recipient, uint256 _amount)) 
   {
-    balances[sender(msg)] = totalSupply;
-    return then become Token(totalSupply, balances, allowances);
+    uint256 _totalSupply = totalSupply + _amount;
+    if (_totalSupply == presaleLimit) {
+      balances[_recipient] = _amount;
+      return true then become Sale(_totalSupply , balances, allowances, sender(msg));
+    }
+    balances[_recipient] = _amount;
+    uint256 _totalSupply = totalSupply + _amount;
+    return true then become Presale(_totalSupply, presaleLimit, maxSupply, balances, allowances);
   }
 }
 
-contract Token
+
+contract Sale
 ( uint256 totalSupply
 , address => uint256 balances
 , address => address => uint256 allowances
+, address recipient
 )
 {
   case(bool transfer(address _to, uint256 _amount)) 
   {
-    balances[sender(msg)] = balances[sender(msg)] + _amount;
-    return true then become Token(totalSupply, balances, allowances);
+    balances[_to] = balances[_to] + _amount;
+    balances[sender(msg)] = balances[sender(msg)] - _amount;
+    return true then become Sale(totalSupply, balances, allowances, recipient);
   }
+
   case(uint256 balanceOf(address _owner))
   {
-    return balances[_owner] then become Token(totalSupply, balances, allowances);
+    return balances[_owner] then become Sale(totalSupply, balances, allowances, recipient);
+  }
+
+ case(bool contribute())
+  {
+    void =  recipient.default() with value(msg) reentrance { abort; };
+    return true then become Sale(totalSupply, balances, allowances, recipient);
+  }
+
+  case(uint256 totalSupply()) {
+    return totalSupply then become Sale(totalSupply, balances, allowances, recipient);
   }
 }
