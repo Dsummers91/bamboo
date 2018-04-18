@@ -41,11 +41,49 @@ contract Sale
 
  case(bool contribute())
   {
-    void =  recipient.default() with value(msg) reentrance { abort; };
+    void = recipient.default() with value(msg) reentrance { abort; };
     return true then become Sale(totalSupply, balances, allowances, recipient);
   }
 
   case(uint256 totalSupply()) {
     return totalSupply then become Sale(totalSupply, balances, allowances, recipient);
+  }
+
+  case (void endSale()) {
+    return then become Token(totalSupply, balances, allowances);
+  }
+}
+
+
+event Transfer(address indexed _from, address indexed _to, uint256 _amount);
+event Buy(address indexed _buyer, uint256 _amount, uint256 _value);
+event Sell(address indexed _buyer, uint256 _amount, uint256 _value);
+event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+
+contract Token
+(
+  uint256 totalSupply
+, address => uint256 balances
+, address => address => uint256 allowances
+)
+{
+  case(uint256 balanceOf(address _owner))
+  {
+    return balances[_owner] then become Token(totalSupply, balances, allowances);
+  }
+
+  case(uint256 totalSupply()) {
+    return totalSupply then become Token(totalSupply, balances, allowances);
+  }
+  
+
+  case(void transfer(address _to, uint256 _amount)) {
+    if (balances[sender(msg)] < _amount) abort;
+    balances[sender(msg)] = balances[sender(msg)] - _amount;
+    if (balances[_to] + _amount < balances[_to]) abort;
+    balances[_to] = balances[_to] + _amount;
+    log Transfer(sender(msg), _to, _amount);
+    return then become Token(totalSupply, balances, allowances);
   }
 }
